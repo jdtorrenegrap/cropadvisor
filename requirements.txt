@@ -2,6 +2,7 @@ python-dotenv[all]
 fastapi[all]
 langchain
 langchain-ollama
-langgraphs
+langchain-community
+langgraph
 redis
 PyJWT
