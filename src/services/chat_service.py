@@ -1,69 +1,68 @@
-from langchain_ollama import OllamaLLM
+from langchain_deepseek import ChatDeepSeek
 from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
+import os
 from src.services.queries_service import QueriesService
 from src.services.memory_service import MemoryService
 from src.middleware.data_token import TokenUsers
 
+load_dotenv()
 
 class ChatService:
 
     def __init__(self):
-        self.memory = MemoryService()
+        #self.memory = MemoryService()
         self.data_token = TokenUsers()
         self.queries_service = QueriesService()
-        self.model = OllamaLLM(
-            model="gemma3:4b",
-            temperature=0.3,  # Reduce la temperatura 
-            num_ctx=1024,     # Aumenta el contexto
-            top_k=20,         
-            top_p=0.85,
-            max_tokens=300
-        )
-        
 
-        self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", """Eres un experto en agricultura llamado AgroBot. Tu función es asistir en monitoreo de cultivos 
-            usando datos de sensores y configuraciones del usuario. Sigue estrictamente estas reglas:
-            
-            1. Usar SIEMPRE los datos proporcionados en este orden:
-               - Ubicación: {address}
-               - Lecturas : {reads}
-               - Alertas activas: {alerts}
-               - Historial de conversacion: {chat_history}
-               
-            2. Respuestas deben ser en español claro y estructurado con:
-               - Análisis breve de datos
-               - Recomendaciones específicas
-               - Consideraciones adicionales
-               
-            3. Si faltan datos importantes, solicitar amablemente la información.
-            
-            4. Mantener respuestas técnicas pero accesibles, usando máximo 3 párrafos.
-            
+        self.model = ChatDeepSeek(
+            model_name="deepseek-chat",
+            temperature=0, 
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            api_key=os.getenv("llm")
+        )
+
+        self.prompt_template =ChatPromptTemplate.from_messages([
+            ("system", """Eres un chatbot experto en monitoreo de cultivos y en dar recomendaciones. 
+            Usa la información previa y la ubicación del usuario ({address}), así como las lecturas ({reads}) 
+            y alertas configuradas ({alerts}) para responder correctamente. 
+            Si el usuario ya mencionó su cultivo, no preguntes de nuevo. Sé amigable y responde con empatía.
             """),
-            
-            ("human", "{question}")
+            ("human","**Pregunta:** {question}")
         ])
 
     def chat(self, token, message):
-        user_id = self.data_token.extract_user_info(token)[0]
-        chat_history = self.memory.get_chat_history(user_id)
-
-        reads = self.queries_service.get_reads(token)
-        alerts = self.queries_service.get_alerts(token)
-        address = self.queries_service.get_adress() 
-
-        input_data = {
-            "chat_history": chat_history, 
-            "question": message,
-            "reads": reads,
-            "alerts": alerts,
-            "address": address
-        }
-
-        chain = self.prompt_template | self.model 
-        response = chain.invoke(input_data)
-
-        self.memory.save_message(user_id, message, response)
-
-        return response
+        try:
+            
+            user_id = self.data_token.extract_user_info(token)[0]
+            #chat_history = self.memory.get_chat_history(user_id)
+    
+            reads = self.queries_service.get_reads(token)
+            alerts = self.queries_service.get_alerts(token)
+            address = self.queries_service.get_adress()
+    
+            input_data = {
+                #"chat_history": chat_history,
+                "question": message,
+                "reads": reads,
+                "alerts": alerts,
+                "address": address
+            }
+            prompt = self.prompt_template.format_prompt(**input_data)
+            response = self.model.invoke(prompt)
+    
+            if isinstance(response, dict) and "content" in response:
+                response_text = response["content"]
+            elif hasattr(response, "content"):
+                response_text = response.content
+            else:
+                response_text = "Lo siento, no pude procesar tu solicitud correctamente."
+    
+            #self.memory.save_message(user_id, message, response_text)
+    
+            return response_text
+    
+        except Exception as e:
+            return f"Lo siento, ocurrió un error: {str(e)}"

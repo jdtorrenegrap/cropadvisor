@@ -9,7 +9,11 @@ chat = ChatService()
 
 @router.post("/webhook")
 async def webhook(message: ChatMessage):
-    pass
+    try:
+        result = chat.process_webhook_message(message)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en webhook: {str(e)}")
 
 @router.post("/cropadvisor/chat")
 async def chat_message(message: ChatMessage, token: str = Depends(TokenUsers.validate_token)):

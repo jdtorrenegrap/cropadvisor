@@ -11,6 +11,12 @@ CropAdvisor es una API diseñada para proporcionar recomendaciones inteligentes 
 
 ---
 
+## Clona este repositorio
+
+```bash
+git clone https://github.com/jdtorrenegrap/cropadvisor.git
+```
+
 ## Configuración de Redis con Docker
 
 Redis es un servicio de base de datos en memoria que se utiliza para almacenar el historial de chat y otros datos temporales. Sigue estos pasos para configurarlo:

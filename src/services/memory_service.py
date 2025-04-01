@@ -1,4 +1,3 @@
-from redis import Redis
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain.schema import AIMessage, HumanMessage
 from src.core.config import Settings

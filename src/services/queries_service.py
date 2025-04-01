@@ -20,7 +20,7 @@ class QueriesService:
             if data:
                 formatted_data = "**Lecturas de sensores:**\n"
                 for i in data:
-                    formatted_data += f"- **Sensot:** {i.get('device_id', 'N/A')}\n"
+                    formatted_data += f"- **Sensor:** {i.get('device_id', 'N/A')}\n"
                     formatted_data += f"  **Unidad de medida:** {i.get('unit_id', 'N/A')}, Valor: {i.get('value', 'N/A')}\n"
                     formatted_data += f"  *Fecha:** {i.get('created_at', 'N/A')}\n"
                 return formatted_data.strip()
