@@ -34,12 +34,16 @@ class TokenUsers:
     def validate_token(credentials: Security = Security(security)):
         """Valida el token JWT desde el encabezado Authorization."""
         token = credentials.credentials
+        print(f"Token recibido: {token}")
         try:
             jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             return token  
         except ExpiredSignatureError:
+            print("Token expirado")
             raise HTTPException(status_code=401, detail="El token ha expirado.")
         except InvalidTokenError:
+            print("Token inválido")
             raise HTTPException(status_code=401, detail="Token inválido.")
         except Exception as e:
+            print(f"Error al validar el token")
             raise HTTPException(status_code=401, detail=f"Error al validar el token: {str(e)}")
